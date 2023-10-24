@@ -1,7 +1,9 @@
 import { Provider } from "react-redux";
-import "./App.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import AddTodoForm from "./Components/AddTodoForm";
 import TodoList from "./Components/TodoList";
+import { env } from "./Env/env";
 import store from "./Features/Store";
 
 const App = () => {
@@ -20,6 +22,17 @@ const App = () => {
           </div>
         </div>
       </div>
+      <ToastContainer
+        position="top-center"
+        autoClose={env.toastDuration}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </Provider>
   );
 };

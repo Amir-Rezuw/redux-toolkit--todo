@@ -1,18 +1,35 @@
 import { useRef } from "react";
 import { useDispatch } from "react-redux";
-import { addTodo } from "../Features/todo/todoSlice";
+import { toast } from "react-toastify";
+import { v4 as uuid } from "uuid";
+import { AppDispatch } from "../Features/Store";
+import { addToDbTodoList } from "../Features/todo/todoSlice";
+import { ITodo } from "../Types/Common";
 import Button from "./Shared/Button";
 
 const AddTodoForm = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+
   const todoTitleInputRef = useRef<HTMLInputElement>(null);
   return (
     <form
       className={`mt-3 mb-4 `}
       onSubmit={(e) => {
         e.preventDefault();
-        dispatch(addTodo(todoTitleInputRef.current?.value));
-        if (todoTitleInputRef.current) todoTitleInputRef.current.value = "";
+        if (!todoTitleInputRef.current?.value) {
+          todoTitleInputRef.current?.classList.add("border-danger");
+          toast.error("Please enter a title for your todo");
+          return;
+        }
+        const newTodoList: ITodo[] = [
+          {
+            id: uuid(),
+            isCompleted: false,
+            title: todoTitleInputRef.current.value,
+          },
+        ];
+        dispatch(addToDbTodoList({ data: newTodoList }));
+        todoTitleInputRef.current.value = "";
       }}
     >
       <label
@@ -26,7 +43,7 @@ const AddTodoForm = () => {
         type="text"
         name="name"
         id="name"
-        className="border border-text-400 w-full my-4 h-9 rounded-lg px-2 md:w-11/12"
+        className="border border-text-400 w-full my-4 h-9 rounded-lg px-2 md:w-11/12 "
         ref={todoTitleInputRef}
       />
       <br />
