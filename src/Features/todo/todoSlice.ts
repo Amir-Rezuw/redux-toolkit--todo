@@ -1,8 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import { child, get, ref, set } from "firebase/database";
 import { toast } from "react-toastify";
-import { env } from "../../Env/env";
-import { _API } from "../../Service/API";
+import { db } from "../../Env/firebase";
 import { ITodo } from "../../Types/Common";
 const initialState: ITodoSlice = {
   todoList: [],
@@ -11,30 +11,38 @@ const initialState: ITodoSlice = {
 };
 export const getTodoList = createAsyncThunk(
   "todoList/get",
-  async (_, { rejectWithValue }) => {
+  async (_, { fulfillWithValue }) => {
     try {
-      return (await axios.get(`${env.baseUrl}todoList.json`)).data;
+      const dbRef = ref(db);
+      const data = get(child(dbRef, `data`)).then((snapshot) => {
+        return snapshot.val();
+      });
+      return fulfillWithValue(await data);
     } catch (error) {
       toast.error((error as AxiosError).message);
-      return rejectWithValue(error);
     }
   }
 );
 export const addToDbTodoList = createAsyncThunk(
   "todoList/add",
-  async (payload: { data: ITodo[] }, { fulfillWithValue }) => {
+  async (
+    payload: { data: ITodo[]; currentlyAdded: ITodo },
+    { fulfillWithValue }
+  ) => {
     try {
-      await _API({
-        url: "todoList.json",
-        data: JSON.stringify(payload),
-        method: "post",
+      set(ref(db), {
+        data: payload.data,
       });
-      return fulfillWithValue(payload.data);
+      return fulfillWithValue({
+        currentData: payload.data,
+        newTodo: payload.currentlyAdded,
+      });
     } catch (error) {
       toast.error((error as AxiosError).message);
     }
   }
 );
+
 const todoSlice = createSlice({
   name: "todo",
   initialState,
@@ -63,11 +71,7 @@ const todoSlice = createSlice({
     [getTodoList.fulfilled.toString()]: (state, action) => {
       state.error = null;
       state.isLoading = false;
-      const arrData = [];
-      for (const key in action.payload) {
-        arrData.push(...action.payload[key].data);
-      }
-      state.todoList = arrData;
+      state.todoList = action.payload;
     },
     [getTodoList.rejected.toString()]: (state, action) => {
       state.error = action.payload;
@@ -81,7 +85,9 @@ const todoSlice = createSlice({
     [addToDbTodoList.fulfilled.toString()]: (state, action) => {
       state.isLoading = false;
       state.error = null;
-      state.todoList = [...state.todoList, ...action.payload];
+      console.log(action.payload);
+
+      state.todoList = [...action.payload.currentData];
     },
   },
 });

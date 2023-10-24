@@ -1,14 +1,18 @@
 import { useRef } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { v4 as uuid } from "uuid";
-import { AppDispatch } from "../Features/Store";
+import { AppDispatch, RootState } from "../Features/Store";
 import { addToDbTodoList } from "../Features/todo/todoSlice";
 import { ITodo } from "../Types/Common";
 import Button from "./Shared/Button";
 
 const AddTodoForm = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { isLoading, currentData } = useSelector((state: RootState) => ({
+    isLoading: state.isLoading,
+    currentData: state.todoList,
+  }));
 
   const todoTitleInputRef = useRef<HTMLInputElement>(null);
   return (
@@ -21,14 +25,17 @@ const AddTodoForm = () => {
           toast.error("Please enter a title for your todo");
           return;
         }
-        const newTodoList: ITodo[] = [
-          {
-            id: uuid(),
-            isCompleted: false,
-            title: todoTitleInputRef.current.value,
-          },
-        ];
-        dispatch(addToDbTodoList({ data: newTodoList }));
+        const newTodo: ITodo = {
+          id: uuid(),
+          isCompleted: false,
+          title: todoTitleInputRef.current.value,
+        };
+        dispatch(
+          addToDbTodoList({
+            data: [...(currentData ?? []), newTodo],
+            currentlyAdded: newTodo,
+          })
+        );
         todoTitleInputRef.current.value = "";
       }}
     >
@@ -48,8 +55,11 @@ const AddTodoForm = () => {
       />
       <br />
       <Button
+        disabled={isLoading}
         type="submit"
-        className="bg-primary-700 text-text-100 w-full md:w-11/12"
+        className={`bg-primary-700 text-text-100 w-full md:w-11/12 ${
+          isLoading && "opacity-50"
+        }`}
       >
         Submit
       </Button>

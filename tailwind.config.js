@@ -14,6 +14,7 @@ export default {
       "primary-600": "#4f46e5",
       "primary-100": "#e0e7ff",
       danger: "#DC3545",
+      warning: "#FFC124",
     },
     flex: {
       3: "3",
