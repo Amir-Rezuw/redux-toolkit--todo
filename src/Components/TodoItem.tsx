@@ -1,17 +1,21 @@
 import { FC } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../Features/Store";
-import { deleteTodo, toggleCompletion } from "../Features/todo/todoSlice";
+import { deleteTodo, toggleTodoCompletion } from "../Features/todo/todoSlice";
 import Button from "./Shared/Button";
 
 interface IProps {
   id: string;
   title: string;
   isCompleted: boolean;
+  index: number;
 }
-const TodoItem: FC<IProps> = ({ id, title, isCompleted }) => {
+const TodoItem: FC<IProps> = ({ id, title, isCompleted, index }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const isLoading = useSelector((state: RootState) => state.isLoading);
+  const { isLoading, data } = useSelector((state: RootState) => ({
+    isLoading: state.isLoading,
+    data: state.todoList,
+  }));
   return (
     <li
       className={`border-b border-text-400 py-2 first:pt-0 last:border-none last:pb-0`}
@@ -19,7 +23,9 @@ const TodoItem: FC<IProps> = ({ id, title, isCompleted }) => {
       <div className="flex justify-between px-2">
         <div className="flex items-center ">
           <input
-            onChange={() => dispatch(toggleCompletion(id))}
+            onChange={() =>
+              dispatch(toggleTodoCompletion({ data, toggledTodoId: id }))
+            }
             type="checkbox"
             className="mr-3"
           />
@@ -30,7 +36,7 @@ const TodoItem: FC<IProps> = ({ id, title, isCompleted }) => {
             className={`bg-danger text-text-100${isLoading && "opacity-50"}`}
             type="button"
             onClick={() => {
-              // dispatch(deleteTodoItem(id));
+              dispatch(deleteTodo({ stringId: id, removedItemIndex: index }));
             }}
             disabled={isLoading}
           >
@@ -41,9 +47,6 @@ const TodoItem: FC<IProps> = ({ id, title, isCompleted }) => {
               isLoading && "opacity-50"
             }`}
             type="button"
-            onClick={() => {
-              dispatch(deleteTodo(id));
-            }}
             disabled={isLoading}
           >
             Edit

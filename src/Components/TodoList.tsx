@@ -18,10 +18,11 @@ const TodoList = () => {
     <div>
       <h2 className="mb-4">TodoList</h2>
       <ul className="border py-5 rounded-xl border-text-400">
-        {todoList.map((todo) => (
+        {todoList.map((todo, index) => (
           <TodoItem
             key={todo.id}
             {...todo}
+            index={index}
           />
         ))}
       </ul>

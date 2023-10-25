@@ -25,10 +25,7 @@ export const getTodoList = createAsyncThunk(
 );
 export const addToDbTodoList = createAsyncThunk(
   "todoList/add",
-  async (
-    payload: { data: ITodo[]; currentlyAdded: ITodo },
-    { fulfillWithValue }
-  ) => {
+  (payload: { data: ITodo[]; currentlyAdded: ITodo }, { fulfillWithValue }) => {
     try {
       set(ref(db), {
         data: payload.data,
@@ -42,20 +39,49 @@ export const addToDbTodoList = createAsyncThunk(
     }
   }
 );
+export const deleteTodo = createAsyncThunk(
+  "todoList/delete",
+  async (
+    payload: { stringId: string; removedItemIndex: number },
+    { getState, fulfillWithValue }
+  ) => {
+    try {
+      const arrayWithoutDeletedItem = (
+        getState() as ITodoSlice
+      ).todoList.filter((todo) => todo.id !== payload.stringId);
 
+      set(ref(db), {
+        data: arrayWithoutDeletedItem,
+      });
+      return fulfillWithValue(arrayWithoutDeletedItem);
+    } catch (error) {
+      toast.error("Error removing data");
+    }
+  }
+);
+export const toggleTodoCompletion = createAsyncThunk(
+  "todoList/toggleCompletion",
+  async (payload: { data: ITodo[]; toggledTodoId: string }, {}) => {
+    // const toggledList = state.todoList.map((todo) => {
+    //   if (todo.id === payload.id) {
+
+    //   }
+    //   return todo;
+    // });
+    const toggledList = payload.data.map((todo) => {
+      if (todo.id === payload.toggledTodoId) {
+        todo.isCompleted = !todo.isCompleted;
+      }
+      return todo;
+    });
+    // const updates = {};
+    // update(ref(db), updates);
+  }
+);
 const todoSlice = createSlice({
   name: "todo",
   initialState,
   reducers: {
-    toggleCompletion: (state, action) => {
-      const selectedTodo = state.todoList.find(
-        (todo) => todo.id === action.payload
-      );
-
-      if (selectedTodo) {
-        selectedTodo.isCompleted = !selectedTodo?.isCompleted;
-      }
-    },
     deleteTodo: (state, action) => {
       state.todoList = state.todoList.filter(
         (todo) => todo.id !== action.payload
@@ -85,13 +111,18 @@ const todoSlice = createSlice({
     [addToDbTodoList.fulfilled.toString()]: (state, action) => {
       state.isLoading = false;
       state.error = null;
-      console.log(action.payload);
-
       state.todoList = [...action.payload.currentData];
+    },
+
+    [deleteTodo.pending.toString()]: (state) => {
+      state.isLoading = true;
+    },
+    [deleteTodo.fulfilled.toString()]: (state, action) => {
+      state.isLoading = false;
+      state.todoList = action.payload;
     },
   },
 });
-export const { deleteTodo, toggleCompletion } = todoSlice.actions;
 export default todoSlice.reducer;
 interface ITodoSlice {
   todoList: ITodo[];
